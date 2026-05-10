@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TMSL → C# Converter</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0f1117;
+    --surface:   #181c27;
+    --border:    #2a2f3e;
+    --accent:    #4f8ef7;
+    --accent2:   #7c3aed;
+    --success:   #22c55e;
+    --error:     #ef4444;
+    --text:      #e2e8f0;
+    --muted:     #64748b;
+    --mono:      'JetBrains Mono', monospace;
+    --sans:      'Syne', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 16px 64px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  header h1 span {
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  header p {
+    margin-top: 8px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.8rem;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 680px;
+    padding: 32px;
+  }
+
+  /* Drop zone */
+  #drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    padding: 48px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+  }
+  #drop-zone:hover, #drop-zone.drag-over {
+    border-color: var(--accent);
+    background: rgba(79,142,247,0.05);
+  }
+  #drop-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+  #drop-zone .icon {
+    font-size: 2.2rem;
+    margin-bottom: 12px;
+  }
+  #drop-zone .label {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  #drop-zone .label strong {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* File info */
+  #file-info {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    margin-top: 20px;
+    padding: 12px 16px;
+    background: rgba(79,142,247,0.08);
+    border: 1px solid rgba(79,142,247,0.25);
+    border-radius: 8px;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+  }
+  #file-info .fname { color: var(--accent); flex: 1; word-break: break-all; }
+  #file-info .fsize { color: var(--muted); white-space: nowrap; }
+  #file-clear {
+    background: none; border: none; color: var(--muted);
+    cursor: pointer; font-size: 1rem; padding: 0 4px;
+    transition: color 0.15s;
+  }
+  #file-clear:hover { color: var(--error); }
+
+  /* Config section */
+  .config {
+    margin-top: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .config label {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .config input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .config input:focus { border-color: var(--accent); }
+  .config input::placeholder { color: var(--muted); }
+
+  /* Convert button */
+  #convert-btn {
+    margin-top: 28px;
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-family: var(--sans);
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.3px;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  #convert-btn:hover:not(:disabled) { opacity: 0.9; }
+  #convert-btn:active:not(:disabled) { transform: scale(0.99); }
+  #convert-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Status */
+  #status {
+    display: none;
+    margin-top: 20px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
+  #status.success {
+    background: rgba(34,197,94,0.1);
+    border: 1px solid rgba(34,197,94,0.3);
+    color: var(--success);
+  }
+  #status.error {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.3);
+    color: var(--error);
+  }
+
+  /* Preview */
+  #preview-wrap {
+    display: none;
+    margin-top: 28px;
+  }
+  #preview-wrap .section-label {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+  #preview {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: #94a3b8;
+    max-height: 220px;
+    overflow-y: auto;
+    white-space: pre;
+    line-height: 1.6;
+  }
+  #preview::-webkit-scrollbar { width: 6px; }
+  #preview::-webkit-scrollbar-track { background: transparent; }
+  #preview::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* Download button */
+  #download-btn {
+    display: none;
+    margin-top: 16px;
+    width: 100%;
+    padding: 13px;
+    background: transparent;
+    border: 1px solid var(--success);
+    border-radius: 8px;
+    color: var(--success);
+    font-family: var(--sans);
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  #download-btn:hover { background: rgba(34,197,94,0.08); }
+
+  footer {
+    margin-top: 40px;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.8;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>TMSL <span>→ C#</span> Converter</h1>
+  <p>Azure Analysis Services &nbsp;·&nbsp; Fabric Semantic Model &nbsp;·&nbsp; TOM</p>
+</header>
+
+<div class="card">
+
+  <!-- Drop zone -->
+  <div id="drop-zone">
+    <input type="file" id="file-input" accept=".tmsl,.json" />
+    <div class="icon">📄</div>
+    <div class="label">
+      <strong>Click to browse</strong> or drag &amp; drop<br/>
+      Accepts <code>.tmsl</code> files
+    </div>
+  </div>
+
+  <!-- File info bar -->
+  <div id="file-info">
+    <span class="fname" id="fname-text"></span>
+    <span class="fsize" id="fsize-text"></span>
+    <button id="file-clear" title="Clear file">✕</button>
+  </div>
+
+  <!-- Config inputs -->
+  <div class="config">
+    <div>
+      <label>XMLA Endpoint (Workspace Name)</label>
+      <input id="cfg-workspace" type="text"
+        placeholder="e.g. MyFabricWorkspace" />
+    </div>
+    <div>
+      <label>Semantic Model Name</label>
+      <input id="cfg-model" type="text"
+        placeholder="e.g. Sales Semantic Model" />
+    </div>
+  </div>
+
+  <!-- Convert -->
+  <button id="convert-btn" disabled>Convert to C#</button>
+
+  <!-- Status -->
+  <div id="status"></div>
+
+  <!-- Preview -->
+  <div id="preview-wrap">
+    <div class="section-label">Preview (first 40 lines)</div>
+    <pre id="preview"></pre>
+  </div>
+
+  <!-- Download -->
+  <button id="download-btn">⬇ Download .cs File</button>
+
+</div>
+
+<footer>
+  Runs entirely in your browser · No data is uploaded anywhere<br/>
+  NuGet required: <code>Microsoft.AnalysisServices.NetCore.retail.amd64 ≥ 19.x</code>
+</footer>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// Conversion logic (ported from tmsl_to_csharp.py)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function escVerbatim(s) {
+  return s.replace(/"/g, '""');
+}
+function csv(s) {           // C# verbatim string
+  return `@"${escVerbatim(s)}"`;
+}
+function sanitiseId(name) {
+  let s = name.replace(/[^A-Za-z0-9_]/g, '_');
+  if (/^\d/.test(s)) s = '_' + s;
+  return s;
+}
+function normaliseExpr(expr) {
+  if (Array.isArray(expr)) return expr.join('\n');
+  return String(expr);
+}
+function mapDataType(dt) {
+  return ({ string:'String', int64:'Int64', double:'Double',
+            decimal:'Decimal', boolean:'Boolean', datetime:'DateTime',
+            binary:'Binary' })[dt?.toLowerCase()] ?? 'String';
+}
+function mapMode(m) {
+  return ({ import:'Import', directquery:'DirectQuery',
+            directlake:'DirectLake', dual:'Dual', push:'Push'
+          })[m?.toLowerCase()] ?? 'Import';
+}
+function mapPartitionSource(t) {
+  return ({ calculationgroup:'CalculationGroupSource',
+            m:'MPartitionSource', native:'QueryPartitionSource',
+            query:'QueryPartitionSource'
+          })[t?.toLowerCase()] ?? 'MPartitionSource';
+}
+
+function removeIfExists(tableName) {
+  const q = csv(tableName);
+  return [
+    `// Remove ${JSON.stringify(tableName)} if it already exists`,
+    `if (model.Tables.Contains(${q}))`,
+    `{`,
+    `    Console.WriteLine("Removing existing table: ${tableName}");`,
+    `    model.Tables.Remove(${q});`,
+    `}`,
+  ].join('\n');
+}
+
+function genCalculationGroup(table) {
+  const tname = table.name;
+  const tvar  = sanitiseId(tname);
+  const items = table.calculationGroup?.calculationItems ?? [];
+  const cols  = table.columns ?? [];
+  const parts = table.partitions ?? [];
+  const lines = [];
+
+  lines.push(removeIfExists(tname));
+  lines.push('');
+  lines.push(`Table ${tvar} = new Table`);
+  lines.push(`{`);
+  lines.push(`    Name = ${csv(tname)},`);
+  lines.push(`    CalculationGroup = new CalculationGroup()`);
+  lines.push(`};`);
+  lines.push('');
+
+  for (const item of items) {
+    const ivar  = sanitiseId(item.name);
+    const iexpr = normaliseExpr(item.expression);
+    lines.push(`// Calculation Item: ${item.name}`);
+    lines.push(`CalculationItem ${ivar} = new CalculationItem`);
+    lines.push(`{`);
+    lines.push(`    Name       = ${csv(item.name)},`);
+    lines.push(`    Expression = ${csv(iexpr)}`);
+    lines.push(`};`);
+    lines.push(`${tvar}.CalculationGroup.CalculationItems.Add(${ivar});`);
+    lines.push('');
+  }
+
+  for (const col of cols) {
+    const cvar = sanitiseId(col.name);
+    lines.push(`// Column: ${col.name}`);
+    lines.push(`DataColumn ${cvar} = new DataColumn`);
+    lines.push(`{`);
+    lines.push(`    Name         = ${csv(col.name)},`);
+    lines.push(`    DataType     = DataType.${mapDataType(col.dataType)},`);
+    lines.push(`    SourceColumn = ${csv(col.sourceColumn ?? 'Name')}`);
+    lines.push(`};`);
+    lines.push(`${tvar}.Columns.Add(${cvar});`);
+    lines.push('');
+  }
+
+  for (const part of parts) {
+    const pvar = sanitiseId(part.name);
+    const src  = mapPartitionSource(part.source?.type ?? 'calculationGroup');
+    lines.push(`// Partition: ${part.name}`);
+    lines.push(`Partition ${pvar} = new Partition`);
+    lines.push(`{`);
+    lines.push(`    Name   = ${csv(part.name)},`);
+    lines.push(`    Mode   = ModeType.${mapMode(part.mode)},`);
+    lines.push(`    Source = new ${src}()`);
+    lines.push(`};`);
+    lines.push(`${tvar}.Partitions.Add(${pvar});`);
+    lines.push('');
+  }
+
+  lines.push(`model.Tables.Add(${tvar});`);
+  return lines.join('\n');
+}
+
+function genMeasureTable(table) {
+  const tname    = table.name;
+  const tvar     = sanitiseId(tname);
+  const measures = table.measures ?? [];
+  const cols     = table.columns ?? [];
+  const parts    = table.partitions ?? [];
+  const lines    = [];
+
+  lines.push(removeIfExists(tname));
+  lines.push('');
+  lines.push(`Table ${tvar} = new Table`);
+  lines.push(`{`);
+  lines.push(`    Name = ${csv(tname)}`);
+  lines.push(`};`);
+  lines.push('');
+
+  for (const m of measures) {
+    const mvar  = sanitiseId(m.name);
+    const mexpr = normaliseExpr(m.expression ?? '');
+    lines.push(`// Measure: ${m.name}`);
+    lines.push(`Measure ${mvar} = new Measure`);
+    lines.push(`{`);
+    lines.push(`    Name       = ${csv(m.name)},`);
+    lines.push(`    Expression = ${csv(mexpr)}`);
+    if (m.formatString) lines.push(`    , FormatString = ${csv(m.formatString)}`);
+    if (m.description)  lines.push(`    , Description  = ${csv(m.description)}`);
+    lines.push(`};`);
+    lines.push(`${tvar}.Measures.Add(${mvar});`);
+    lines.push('');
+  }
+
+  for (const col of cols) {
+    const cvar = sanitiseId(col.name);
+    lines.push(`DataColumn ${cvar} = new DataColumn`);
+    lines.push(`{`);
+    lines.push(`    Name         = ${csv(col.name)},`);
+    lines.push(`    DataType     = DataType.${mapDataType(col.dataType)},`);
+    lines.push(`    SourceColumn = ${csv(col.sourceColumn ?? '')}`);
+    lines.push(`};`);
+    lines.push(`${tvar}.Columns.Add(${cvar});`);
+    lines.push('');
+  }
+
+  for (const part of parts) {
+    const pvar  = sanitiseId(part.name);
+    const ptype = part.source?.type ?? 'm';
+    const mode  = mapMode(part.mode);
+    if (ptype === 'm') {
+      const mq = normaliseExpr(part.source?.expression ?? '');
+      lines.push(`Partition ${pvar} = new Partition`);
+      lines.push(`{`);
+      lines.push(`    Name   = ${csv(part.name)},`);
+      lines.push(`    Mode   = ModeType.${mode},`);
+      lines.push(`    Source = new MPartitionSource`);
+      lines.push(`    {`);
+      lines.push(`        Expression = ${csv(mq)}`);
+      lines.push(`    }`);
+      lines.push(`};`);
+    } else {
+      const src = mapPartitionSource(ptype);
+      lines.push(`Partition ${pvar} = new Partition`);
+      lines.push(`{`);
+      lines.push(`    Name   = ${csv(part.name)},`);
+      lines.push(`    Mode   = ModeType.${mode},`);
+      lines.push(`    Source = new ${src}()`);
+      lines.push(`};`);
+    }
+    lines.push(`${tvar}.Partitions.Add(${pvar});`);
+    lines.push('');
+  }
+
+  lines.push(`model.Tables.Add(${tvar});`);
+  return lines.join('\n');
+}
+
+function genSingleMeasure(tableName, measure) {
+  const mvar  = sanitiseId(measure.name);
+  const mexpr = normaliseExpr(measure.expression ?? '');
+  const lines = [];
+  lines.push(`// Single measure: ${measure.name}  (table: ${tableName})`);
+  lines.push(`Table targetTable = model.Tables[${csv(tableName)}];`);
+  lines.push(`if (targetTable == null)`);
+  lines.push(`    throw new Exception("Table '${tableName}' not found.");`);
+  lines.push('');
+  lines.push(`if (targetTable.Measures.Contains(${csv(measure.name)}))`);
+  lines.push(`    targetTable.Measures.Remove(${csv(measure.name)});`);
+  lines.push('');
+  lines.push(`Measure ${mvar} = new Measure`);
+  lines.push(`{`);
+  lines.push(`    Name       = ${csv(measure.name)},`);
+  lines.push(`    Expression = ${csv(mexpr)}`);
+  if (measure.formatString) lines.push(`    , FormatString = ${csv(measure.formatString)}`);
+  if (measure.description)  lines.push(`    , Description  = ${csv(measure.description)}`);
+  lines.push(`};`);
+  lines.push(`targetTable.Measures.Add(${mvar});`);
+  return lines.join('\n');
+}
+
+function parseTmsl(tmsl) {
+  const blocks = [];
+  const notes  = [];
+
+  for (const cmdKey of ['createOrReplace', 'create', 'alter']) {
+    if (!(cmdKey in tmsl)) continue;
+    const cmd = tmsl[cmdKey];
+    const obj = cmd.object ?? {};
+
+    if (cmd.table) {
+      const t = cmd.table;
+      if (t.calculationGroup) {
+        notes.push(`Calculation Group table: ${t.name}`);
+        blocks.push(genCalculationGroup(t));
+      } else {
+        notes.push(`Measure table: ${t.name}`);
+        blocks.push(genMeasureTable(t));
+      }
+    } else if (cmd.measure) {
+      const tname = obj.table ?? '';
+      notes.push(`Single measure: ${cmd.measure.name} on table ${tname}`);
+      blocks.push(genSingleMeasure(tname, cmd.measure));
+    }
+  }
+
+  if (tmsl.model) {
+    for (const t of tmsl.model.tables ?? []) {
+      if (t.calculationGroup) {
+        notes.push(`Calculation Group table: ${t.name}`);
+        blocks.push(genCalculationGroup(t));
+      } else {
+        notes.push(`Table: ${t.name}`);
+        blocks.push(genMeasureTable(t));
+      }
+    }
+  }
+
+  if (blocks.length === 0)
+    throw new Error('No recognised TMSL command found (createOrReplace / create / alter / model).');
+
+  const description = '// Objects converted from TMSL:\n' +
+    notes.map(n => `//   • ${n}`).join('\n');
+  return { description, blocks };
+}
+
+function indent(text, spaces) {
+  const pad = ' '.repeat(spaces);
+  return text.split('\n').map(l => pad + l).join('\n');
+}
+
+function buildCsFile({ csFilename, tmslFilename, workspace, modelName, description, blocks }) {
+  const body = indent(blocks.join('\n\n'), 12);
+  const ws   = workspace  || 'YOUR_WORKSPACE_NAME';
+  const dm   = modelName  || 'YOUR_SEMANTIC_MODEL_NAME';
+
+  return `// =============================================================================
+// ${csFilename}
+//
+// AUTO-GENERATED by TMSL → C# Converter
+// Source TMSL : ${tmslFilename}
+//
+${description}
+//
+// NuGet : Microsoft.AnalysisServices.NetCore.retail.amd64  (>= 19.x)
+//
+// Before running:
+//   1. Verify ServerConnectionString and DatabaseName below
+//   2. Ensure XMLA Read/Write is enabled on the workspace
+// =============================================================================
+
+using System;
+using Microsoft.AnalysisServices.Tabular;
+
+class Program
+{
+    private const string ServerConnectionString =
+        "Data Source=powerbi://api.powerbi.com/v1.0/myorg/${ws};" +
+        "Password=YOUR_PASSWORD_OR_TOKEN;" +
+        "User ID=YOUR_USER_OR_APP_ID;";
+
+    private const string DatabaseName = "${dm}";
+
+    static void Main(string[] args)
+    {
+        Console.WriteLine("Connecting to Fabric / Power BI XMLA endpoint...");
+
+        using (Server server = new Server())
+        {
+            server.Connect(ServerConnectionString);
+            Console.WriteLine($"Connected: {server.Name}");
+
+            Database database = server.Databases[DatabaseName];
+            if (database == null)
+                throw new Exception($"Database '{DatabaseName}' not found.");
+
+            Model model = database.Model;
+
+            // -----------------------------------------------------------------
+            // Generated objects
+            // -----------------------------------------------------------------
+${body}
+
+            // -----------------------------------------------------------------
+            // Persist to the service
+            // -----------------------------------------------------------------
+            Console.WriteLine("Saving changes...");
+            model.SaveChanges();
+            Console.WriteLine("Done – all objects created successfully.");
+        }
+    }
+}
+`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UI logic
+// ─────────────────────────────────────────────────────────────────────────────
+
+let currentFile = null;
+let generatedCs = null;
+
+const dropZone     = document.getElementById('drop-zone');
+const fileInput    = document.getElementById('file-input');
+const fileInfo     = document.getElementById('file-info');
+const fnameText    = document.getElementById('fname-text');
+const fsizeText    = document.getElementById('fsize-text');
+const fileClear    = document.getElementById('file-clear');
+const convertBtn   = document.getElementById('convert-btn');
+const statusEl     = document.getElementById('status');
+const previewWrap  = document.getElementById('preview-wrap');
+const previewEl    = document.getElementById('preview');
+const downloadBtn  = document.getElementById('download-btn');
+const cfgWorkspace = document.getElementById('cfg-workspace');
+const cfgModel     = document.getElementById('cfg-model');
+
+function formatBytes(b) {
+  if (b < 1024) return b + ' B';
+  return (b / 1024).toFixed(1) + ' KB';
+}
+
+function setFile(file) {
+  currentFile = file;
+  fnameText.textContent = file.name;
+  fsizeText.textContent = formatBytes(file.size);
+  fileInfo.style.display = 'flex';
+  convertBtn.disabled = false;
+  clearOutput();
+}
+
+function clearOutput() {
+  statusEl.style.display = 'none';
+  previewWrap.style.display = 'none';
+  downloadBtn.style.display = 'none';
+  generatedCs = null;
+}
+
+function clearFile() {
+  currentFile = null;
+  fileInput.value = '';
+  fileInfo.style.display = 'none';
+  convertBtn.disabled = true;
+  clearOutput();
+}
+
+function showStatus(msg, type) {
+  statusEl.textContent = msg;
+  statusEl.className = type;
+  statusEl.style.display = 'block';
+}
+
+fileInput.addEventListener('change', e => {
+  if (e.target.files[0]) setFile(e.target.files[0]);
+});
+fileClear.addEventListener('click', clearFile);
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f) setFile(f);
+});
+
+convertBtn.addEventListener('click', () => {
+  if (!currentFile) return;
+
+  convertBtn.disabled = true;
+  convertBtn.textContent = 'Converting…';
+  clearOutput();
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const tmsl = JSON.parse(e.target.result);
+      const { description, blocks } = parseTmsl(tmsl);
+
+      const csFilename = currentFile.name.replace(/\.(tmsl|json)$/i, '.cs');
+      generatedCs = buildCsFile({
+        csFilename,
+        tmslFilename : currentFile.name,
+        workspace    : cfgWorkspace.value.trim(),
+        modelName    : cfgModel.value.trim(),
+        description,
+        blocks,
+      });
+
+      // Preview first 40 lines
+      const lines = generatedCs.split('\n').slice(0, 40).join('\n');
+      previewEl.textContent = lines + '\n…';
+      previewWrap.style.display = 'block';
+
+      showStatus(`✓ Converted successfully · ${blocks.length} object(s) generated`, 'success');
+      downloadBtn.textContent = `⬇ Download  ${csFilename}`;
+      downloadBtn.style.display = 'block';
+      downloadBtn._filename = csFilename;
+    } catch (err) {
+      showStatus(`✗ Error: ${err.message}`, 'error');
+    } finally {
+      convertBtn.disabled = false;
+      convertBtn.textContent = 'Convert to C#';
+    }
+  };
+  reader.readAsText(currentFile);
+});
+
+downloadBtn.addEventListener('click', () => {
+  if (!generatedCs) return;
+  const blob = new Blob([generatedCs], { type: 'text/plain' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = downloadBtn._filename;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+</script>
+</body>
+</html>

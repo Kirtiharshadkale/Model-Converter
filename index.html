@@ -3,24 +3,28 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>TMSL → C# Converter</title>
+<title>Fabric Model Toolkit</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;700&display=swap');
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg:        #0f1117;
-    --surface:   #181c27;
-    --border:    #2a2f3e;
-    --accent:    #4f8ef7;
-    --accent2:   #7c3aed;
-    --success:   #22c55e;
-    --error:     #ef4444;
-    --text:      #e2e8f0;
-    --muted:     #64748b;
-    --mono:      'JetBrains Mono', monospace;
-    --sans:      'Syne', sans-serif;
+    --bg:       #0f1117;
+    --surface:  #181c27;
+    --border:   #2a2f3e;
+    --accent:   #4f8ef7;
+    --accent2:  #7c3aed;
+    --green:    #22c55e;
+    --orange:   #f97316;
+    --orange2:  #db2777;
+    --teal:     #14b8a6;
+    --teal2:    #0891b2;
+    --error:    #ef4444;
+    --text:     #e2e8f0;
+    --muted:    #64748b;
+    --mono:     'JetBrains Mono', monospace;
+    --sans:     'Syne', sans-serif;
   }
 
   body {
@@ -31,570 +35,379 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 48px 16px 64px;
+    padding: 48px 16px 72px;
   }
 
-  header {
-    text-align: center;
-    margin-bottom: 48px;
-  }
-
-  header h1 {
-    font-size: 2rem;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-  }
-
-  header h1 span {
+  header { text-align: center; margin-bottom: 48px; }
+  header h1 { font-size: 2rem; font-weight: 700; letter-spacing: -0.5px; }
+  header h1 .grad {
     background: linear-gradient(90deg, var(--accent), var(--accent2));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   }
+  header p { margin-top: 8px; color: var(--muted); font-family: var(--mono); font-size: 0.78rem; }
 
-  header p {
-    margin-top: 8px;
-    color: var(--muted);
-    font-family: var(--mono);
-    font-size: 0.8rem;
+  .section-wrap { width: 100%; max-width: 680px; margin-bottom: 40px; }
+
+  .section-title { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .section-title h2 { font-size: 1.05rem; font-weight: 700; }
+  .badge {
+    font-family: var(--mono); font-size: 0.68rem; font-weight: 600;
+    padding: 3px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;
   }
+  .badge-blue   { background: rgba(79,142,247,0.15); color: var(--accent);  border: 1px solid rgba(79,142,247,0.3); }
+  .badge-orange { background: rgba(249,115,22,0.15);  color: var(--orange); border: 1px solid rgba(249,115,22,0.3); }
+  .badge-teal   { background: rgba(20,184,166,0.15);  color: var(--teal);   border: 1px solid rgba(20,184,166,0.3); }
 
   .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    width: 100%;
-    max-width: 680px;
-    padding: 32px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; width: 100%; padding: 28px 32px 32px;
   }
 
   /* Drop zone */
-  #drop-zone {
-    border: 2px dashed var(--border);
-    border-radius: 8px;
-    padding: 48px 24px;
-    text-align: center;
-    cursor: pointer;
-    transition: border-color 0.2s, background 0.2s;
+  .drop-zone {
+    border: 2px dashed var(--border); border-radius: 8px; padding: 40px 24px;
+    text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s;
     position: relative;
   }
-  #drop-zone:hover, #drop-zone.drag-over {
-    border-color: var(--accent);
-    background: rgba(79,142,247,0.05);
-  }
-  #drop-zone input[type="file"] {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    cursor: pointer;
-    width: 100%;
-    height: 100%;
-  }
-  #drop-zone .icon {
-    font-size: 2.2rem;
-    margin-bottom: 12px;
-  }
-  #drop-zone .label {
-    font-family: var(--mono);
-    font-size: 0.85rem;
-    color: var(--muted);
-    line-height: 1.6;
-  }
-  #drop-zone .label strong {
-    color: var(--accent);
-    font-weight: 600;
-  }
+  .drop-zone.blue:hover,  .drop-zone.blue.drag-over  { border-color: var(--accent);  background: rgba(79,142,247,0.04); }
+  .drop-zone.orange:hover,.drop-zone.orange.drag-over { border-color: var(--orange);  background: rgba(249,115,22,0.04); }
+  .drop-zone.teal:hover,  .drop-zone.teal.drag-over   { border-color: var(--teal);    background: rgba(20,184,166,0.04); }
+  .drop-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .drop-zone .dz-icon  { font-size: 2rem; margin-bottom: 10px; }
+  .drop-zone .dz-label { font-family: var(--mono); font-size: 0.82rem; color: var(--muted); line-height: 1.6; }
+  .drop-zone .dz-label .hl-blue   { color: var(--accent);  font-weight: 600; }
+  .drop-zone .dz-label .hl-orange { color: var(--orange);  font-weight: 600; }
+  .drop-zone .dz-label .hl-teal   { color: var(--teal);    font-weight: 600; }
 
   /* File info */
-  #file-info {
-    display: none;
-    align-items: center;
-    gap: 12px;
-    margin-top: 20px;
-    padding: 12px 16px;
-    background: rgba(79,142,247,0.08);
-    border: 1px solid rgba(79,142,247,0.25);
-    border-radius: 8px;
-    font-family: var(--mono);
-    font-size: 0.8rem;
+  .file-info {
+    display: none; align-items: center; gap: 12px; margin-top: 16px;
+    padding: 10px 14px; border-radius: 8px; font-family: var(--mono); font-size: 0.78rem;
   }
-  #file-info .fname { color: var(--accent); flex: 1; word-break: break-all; }
-  #file-info .fsize { color: var(--muted); white-space: nowrap; }
-  #file-clear {
-    background: none; border: none; color: var(--muted);
-    cursor: pointer; font-size: 1rem; padding: 0 4px;
-    transition: color 0.15s;
-  }
-  #file-clear:hover { color: var(--error); }
+  .file-info.blue   { background: rgba(79,142,247,0.08); border: 1px solid rgba(79,142,247,0.22); }
+  .file-info.orange { background: rgba(249,115,22,0.08);  border: 1px solid rgba(249,115,22,0.22); }
+  .file-info.teal   { background: rgba(20,184,166,0.08);  border: 1px solid rgba(20,184,166,0.22); }
+  .file-info .fname { flex: 1; word-break: break-all; }
+  .file-info.blue   .fname { color: var(--accent); }
+  .file-info.orange .fname { color: var(--orange); }
+  .file-info.teal   .fname { color: var(--teal);   }
+  .file-info .fsize { color: var(--muted); white-space: nowrap; }
+  .file-clear { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.95rem; padding: 0 4px; transition: color 0.15s; }
+  .file-clear:hover { color: var(--error); }
 
-  /* Config section */
-  .config {
-    margin-top: 28px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-  .config label {
-    font-family: var(--mono);
-    font-size: 0.75rem;
-    color: var(--muted);
-    display: block;
-    margin-bottom: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  .config input {
-    width: 100%;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 10px 14px;
-    color: var(--text);
-    font-family: var(--mono);
-    font-size: 0.82rem;
-    outline: none;
-    transition: border-color 0.2s;
-  }
+  /* Config */
+  .config { margin-top: 22px; display: flex; flex-direction: column; gap: 14px; }
+  .config label { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .config input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 9px 13px; color: var(--text); font-family: var(--mono); font-size: 0.8rem; outline: none; transition: border-color 0.2s; }
   .config input:focus { border-color: var(--accent); }
   .config input::placeholder { color: var(--muted); }
 
-  /* Convert button */
-  #convert-btn {
-    margin-top: 28px;
-    width: 100%;
-    padding: 14px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border: none;
-    border-radius: 8px;
-    color: #fff;
-    font-family: var(--sans);
-    font-size: 0.95rem;
-    font-weight: 700;
-    cursor: pointer;
-    letter-spacing: 0.3px;
-    transition: opacity 0.2s, transform 0.1s;
+  /* Action button */
+  .action-btn {
+    margin-top: 24px; width: 100%; padding: 13px; border: none; border-radius: 8px;
+    color: #fff; font-family: var(--sans); font-size: 0.92rem; font-weight: 700;
+    cursor: pointer; letter-spacing: 0.3px; transition: opacity 0.2s, transform 0.1s;
   }
-  #convert-btn:hover:not(:disabled) { opacity: 0.9; }
-  #convert-btn:active:not(:disabled) { transform: scale(0.99); }
-  #convert-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .action-btn.blue   { background: linear-gradient(135deg, var(--accent), var(--accent2)); }
+  .action-btn.orange { background: linear-gradient(135deg, var(--orange), var(--orange2)); }
+  .action-btn.teal   { background: linear-gradient(135deg, var(--teal),   var(--teal2));  }
+  .action-btn:hover:not(:disabled)  { opacity: 0.88; }
+  .action-btn:active:not(:disabled) { transform: scale(0.99); }
+  .action-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
   /* Status */
-  #status {
-    display: none;
-    margin-top: 20px;
-    padding: 12px 16px;
-    border-radius: 8px;
-    font-family: var(--mono);
-    font-size: 0.82rem;
-    line-height: 1.5;
-  }
-  #status.success {
-    background: rgba(34,197,94,0.1);
-    border: 1px solid rgba(34,197,94,0.3);
-    color: var(--success);
-  }
-  #status.error {
-    background: rgba(239,68,68,0.1);
-    border: 1px solid rgba(239,68,68,0.3);
-    color: var(--error);
-  }
+  .status-box { display: none; margin-top: 16px; padding: 11px 15px; border-radius: 8px; font-family: var(--mono); font-size: 0.8rem; line-height: 1.5; }
+  .status-box.success { background: rgba(34,197,94,0.09);  border: 1px solid rgba(34,197,94,0.28);  color: var(--green); }
+  .status-box.error   { background: rgba(239,68,68,0.09);  border: 1px solid rgba(239,68,68,0.28);  color: var(--error); }
 
   /* Preview */
-  #preview-wrap {
-    display: none;
-    margin-top: 28px;
-  }
-  #preview-wrap .section-label {
-    font-family: var(--mono);
-    font-size: 0.72rem;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 8px;
-  }
-  #preview {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 16px;
-    font-family: var(--mono);
-    font-size: 0.75rem;
-    color: #94a3b8;
-    max-height: 220px;
-    overflow-y: auto;
-    white-space: pre;
-    line-height: 1.6;
-  }
-  #preview::-webkit-scrollbar { width: 6px; }
-  #preview::-webkit-scrollbar-track { background: transparent; }
-  #preview::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  .preview-wrap { display: none; margin-top: 22px; }
+  .preview-wrap .plabel { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 7px; }
+  .preview-box { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; font-family: var(--mono); font-size: 0.73rem; color: #94a3b8; max-height: 200px; overflow-y: auto; white-space: pre; line-height: 1.6; }
+  .preview-box::-webkit-scrollbar { width: 5px; }
+  .preview-box::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-  /* Download button */
-  #download-btn {
-    display: none;
-    margin-top: 16px;
-    width: 100%;
-    padding: 13px;
-    background: transparent;
-    border: 1px solid var(--success);
-    border-radius: 8px;
-    color: var(--success);
-    font-family: var(--sans);
-    font-size: 0.9rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  #download-btn:hover { background: rgba(34,197,94,0.08); }
+  /* Download */
+  .download-btn { display: none; margin-top: 14px; width: 100%; padding: 12px; background: transparent; border: 1px solid var(--green); border-radius: 8px; color: var(--green); font-family: var(--sans); font-size: 0.88rem; font-weight: 700; cursor: pointer; transition: background 0.2s; }
+  .download-btn:hover { background: rgba(34,197,94,0.08); }
 
-  footer {
-    margin-top: 40px;
-    font-family: var(--mono);
-    font-size: 0.72rem;
-    color: var(--muted);
-    text-align: center;
-    line-height: 1.8;
-  }
+  .divider { width: 100%; max-width: 680px; border: none; border-top: 1px solid var(--border); margin: 8px 0 40px; }
+
+  footer { margin-top: 16px; font-family: var(--mono); font-size: 0.7rem; color: var(--muted); text-align: center; line-height: 1.9; }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>TMSL <span>→ C#</span> Converter</h1>
-  <p>Azure Analysis Services &nbsp;·&nbsp; Fabric Semantic Model &nbsp;·&nbsp; TOM</p>
+  <h1>Fabric Model <span class="grad">Toolkit</span></h1>
+  <p>Azure Analysis Services &nbsp;·&nbsp; Fabric Semantic Model &nbsp;·&nbsp; Tabular Editor</p>
 </header>
 
-<div class="card">
-
-  <!-- Drop zone -->
-  <div id="drop-zone">
-    <input type="file" id="file-input" accept=".tmsl,.json" />
-    <div class="icon">📄</div>
-    <div class="label">
-      <strong>Click to browse</strong> or drag &amp; drop<br/>
-      Accepts <code>.tmsl</code> files
+<!-- ── Section 1: TMSL → C# ─────────────────────────────────────────────── -->
+<div class="section-wrap">
+  <div class="section-title">
+    <span class="badge badge-blue">Section 1</span>
+    <h2>Calculation Group &rarr; C#</h2>
+  </div>
+  <div class="card">
+    <div class="drop-zone blue" id="tmsl-drop">
+      <input type="file" id="tmsl-input" accept=".tmsl,.json" />
+      <div class="dz-icon">📄</div>
+      <div class="dz-label"><span class="hl-blue">Click to browse</span> or drag &amp; drop<br/>Accepts <code>.tmsl</code> files</div>
     </div>
-  </div>
-
-  <!-- File info bar -->
-  <div id="file-info">
-    <span class="fname" id="fname-text"></span>
-    <span class="fsize" id="fsize-text"></span>
-    <button id="file-clear" title="Clear file">✕</button>
-  </div>
-
-  <!-- Config inputs -->
-  <div class="config">
-    <div>
-      <label>XMLA Endpoint (Workspace Name)</label>
-      <input id="cfg-workspace" type="text"
-        placeholder="e.g. MyFabricWorkspace" />
+    <div class="file-info blue" id="tmsl-info">
+      <span class="fname" id="tmsl-fname"></span>
+      <span class="fsize" id="tmsl-fsize"></span>
+      <button class="file-clear" id="tmsl-clear">✕</button>
     </div>
-    <div>
-      <label>Semantic Model Name</label>
-      <input id="cfg-model" type="text"
-        placeholder="e.g. Sales Semantic Model" />
+    <button class="action-btn blue" id="tmsl-btn" disabled>Convert to C#</button>
+    <div class="status-box" id="tmsl-status"></div>
+    <div class="preview-wrap" id="tmsl-preview-wrap"><div class="plabel">Preview — first 40 lines</div><pre class="preview-box" id="tmsl-preview"></pre></div>
+    <button class="download-btn" id="tmsl-dl">⬇ Download .cs File</button>
+  </div>
+</div>
+
+<hr class="divider" />
+
+<!-- ── Section 2: Relationships.txt → C# ────────────────────────────────── -->
+<div class="section-wrap">
+  <div class="section-title">
+    <span class="badge badge-orange">Section 2</span>
+    <h2>Relationships &rarr; C# &nbsp;(Tabular Editor Script)</h2>
+  </div>
+  <div class="card">
+    <div class="drop-zone orange" id="rel-drop">
+      <input type="file" id="rel-input" accept=".txt,.csv" />
+      <div class="dz-icon">🔗</div>
+      <div class="dz-label"><span class="hl-orange">Click to browse</span> or drag &amp; drop<br/>Accepts pipe-delimited <code>Relationships.txt</code></div>
     </div>
+    <div class="file-info orange" id="rel-info">
+      <span class="fname" id="rel-fname"></span>
+      <span class="fsize" id="rel-fsize"></span>
+      <button class="file-clear" id="rel-clear">✕</button>
+    </div>
+    <button class="action-btn orange" id="rel-btn" disabled>Generate Relationships C#</button>
+    <div class="status-box" id="rel-status"></div>
+    <div class="preview-wrap" id="rel-preview-wrap"><div class="plabel">Preview — first 40 lines</div><pre class="preview-box" id="rel-preview"></pre></div>
+    <button class="download-btn" id="rel-dl">⬇ Download CreateRelationships.cs</button>
   </div>
+</div>
 
-  <!-- Convert -->
-  <button id="convert-btn" disabled>Convert to C#</button>
+<hr class="divider" />
 
-  <!-- Status -->
-  <div id="status"></div>
-
-  <!-- Preview -->
-  <div id="preview-wrap">
-    <div class="section-label">Preview (first 40 lines)</div>
-    <pre id="preview"></pre>
+<!-- ── Section 3: Measures (TMSL → .csx) ────────────────────────────────── -->
+<div class="section-wrap">
+  <div class="section-title">
+    <span class="badge badge-teal">Section 3</span>
+    <h2>Measures &rarr; .csx &nbsp;(Tabular Editor Script)</h2>
   </div>
-
-  <!-- Download -->
-  <button id="download-btn">⬇ Download .cs File</button>
-
+  <div class="card">
+    <div class="drop-zone teal" id="msr-drop">
+      <input type="file" id="msr-input" accept=".tmsl,.json" />
+      <div class="dz-icon">📐</div>
+      <div class="dz-label"><span class="hl-teal">Click to browse</span> or drag &amp; drop<br/>Accepts <code>.tmsl</code> files containing measures</div>
+    </div>
+    <div class="file-info teal" id="msr-info">
+      <span class="fname" id="msr-fname"></span>
+      <span class="fsize" id="msr-fsize"></span>
+      <button class="file-clear" id="msr-clear">✕</button>
+    </div>
+    <button class="action-btn teal" id="msr-btn" disabled>Generate Measures .csx</button>
+    <div class="status-box" id="msr-status"></div>
+    <div class="preview-wrap" id="msr-preview-wrap"><div class="plabel">Preview — first 40 lines</div><pre class="preview-box" id="msr-preview"></pre></div>
+    <button class="download-btn" id="msr-dl">⬇ Download CreateMeasures.csx</button>
+  </div>
 </div>
 
 <footer>
-  Runs entirely in your browser · No data is uploaded anywhere<br/>
-  NuGet required: <code>Microsoft.AnalysisServices.NetCore.retail.amd64 ≥ 19.x</code>
+  Runs entirely in your browser &nbsp;·&nbsp; No data is uploaded anywhere<br/>
+  Section 1 requires: <code>Microsoft.AnalysisServices.NetCore.retail.amd64 &ge; 19.x</code><br/>
+  Sections 2 &amp; 3 output: paste into <code>Tabular Editor &rarr; Advanced Scripting</code>
 </footer>
 
 <script>
-// ─────────────────────────────────────────────────────────────────────────────
-// Conversion logic (ported from tmsl_to_csharp.py)
-// ─────────────────────────────────────────────────────────────────────────────
+'use strict';
 
-function escVerbatim(s) {
-  return s.replace(/"/g, '""');
-}
-function csv(s) {           // C# verbatim string
-  return `@"${escVerbatim(s)}"`;
-}
-function sanitiseId(name) {
-  let s = name.replace(/[^A-Za-z0-9_]/g, '_');
-  if (/^\d/.test(s)) s = '_' + s;
-  return s;
-}
-function normaliseExpr(expr) {
-  if (Array.isArray(expr)) return expr.join('\n');
-  return String(expr);
-}
-function mapDataType(dt) {
-  return ({ string:'String', int64:'Int64', double:'Double',
-            decimal:'Decimal', boolean:'Boolean', datetime:'DateTime',
-            binary:'Binary' })[dt?.toLowerCase()] ?? 'String';
-}
-function mapMode(m) {
-  return ({ import:'Import', directquery:'DirectQuery',
-            directlake:'DirectLake', dual:'Dual', push:'Push'
-          })[m?.toLowerCase()] ?? 'Import';
-}
-function mapPartitionSource(t) {
-  return ({ calculationgroup:'CalculationGroupSource',
-            m:'MPartitionSource', native:'QueryPartitionSource',
-            query:'QueryPartitionSource'
-          })[t?.toLowerCase()] ?? 'MPartitionSource';
-}
+// ── Shared helpers ────────────────────────────────────────────────────────────
+function fmtBytes(b) { return b < 1024 ? b + ' B' : (b/1024).toFixed(1) + ' KB'; }
 
-function removeIfExists(tableName) {
-  const q = csv(tableName);
-  return [
-    `// Remove ${JSON.stringify(tableName)} if it already exists`,
-    `if (model.Tables.Contains(${q}))`,
-    `{`,
-    `    Console.WriteLine("Removing existing table: ${tableName}");`,
-    `    model.Tables.Remove(${q});`,
-    `}`,
-  ].join('\n');
-}
+function wireDropZone(ids, onFile, onClear) {
+  const drop  = document.getElementById(ids.drop);
+  const input = document.getElementById(ids.input);
+  const info  = document.getElementById(ids.info);
+  const fname = document.getElementById(ids.fname);
+  const fsize = document.getElementById(ids.fsize);
+  const clear = document.getElementById(ids.clear);
+  const btn   = document.getElementById(ids.btn);
 
-function genCalculationGroup(table) {
-  const tname = table.name;
-  const tvar  = sanitiseId(tname);
-  const items = table.calculationGroup?.calculationItems ?? [];
-  const cols  = table.columns ?? [];
-  const parts = table.partitions ?? [];
-  const lines = [];
-
-  lines.push(removeIfExists(tname));
-  lines.push('');
-  lines.push(`Table ${tvar} = new Table`);
-  lines.push(`{`);
-  lines.push(`    Name = ${csv(tname)},`);
-  lines.push(`    CalculationGroup = new CalculationGroup()`);
-  lines.push(`};`);
-  lines.push('');
-
-  for (const item of items) {
-    const ivar  = sanitiseId(item.name);
-    const iexpr = normaliseExpr(item.expression);
-    lines.push(`// Calculation Item: ${item.name}`);
-    lines.push(`CalculationItem ${ivar} = new CalculationItem`);
-    lines.push(`{`);
-    lines.push(`    Name       = ${csv(item.name)},`);
-    lines.push(`    Expression = ${csv(iexpr)}`);
-    lines.push(`};`);
-    lines.push(`${tvar}.CalculationGroup.CalculationItems.Add(${ivar});`);
-    lines.push('');
+  function set(file) {
+    fname.textContent = file.name;
+    fsize.textContent = fmtBytes(file.size);
+    info.style.display = 'flex';
+    btn.disabled = false;
+    onFile(file);
+  }
+  function reset() {
+    input.value = '';
+    info.style.display = 'none';
+    btn.disabled = true;
+    onClear();
   }
 
-  for (const col of cols) {
-    const cvar = sanitiseId(col.name);
-    lines.push(`// Column: ${col.name}`);
-    lines.push(`DataColumn ${cvar} = new DataColumn`);
-    lines.push(`{`);
-    lines.push(`    Name         = ${csv(col.name)},`);
-    lines.push(`    DataType     = DataType.${mapDataType(col.dataType)},`);
-    lines.push(`    SourceColumn = ${csv(col.sourceColumn ?? 'Name')}`);
-    lines.push(`};`);
-    lines.push(`${tvar}.Columns.Add(${cvar});`);
-    lines.push('');
-  }
-
-  for (const part of parts) {
-    const pvar = sanitiseId(part.name);
-    const src  = mapPartitionSource(part.source?.type ?? 'calculationGroup');
-    lines.push(`// Partition: ${part.name}`);
-    lines.push(`Partition ${pvar} = new Partition`);
-    lines.push(`{`);
-    lines.push(`    Name   = ${csv(part.name)},`);
-    lines.push(`    Mode   = ModeType.${mapMode(part.mode)},`);
-    lines.push(`    Source = new ${src}()`);
-    lines.push(`};`);
-    lines.push(`${tvar}.Partitions.Add(${pvar});`);
-    lines.push('');
-  }
-
-  lines.push(`model.Tables.Add(${tvar});`);
-  return lines.join('\n');
+  input.addEventListener('change', e => { if (e.target.files[0]) set(e.target.files[0]); });
+  clear.addEventListener('click', reset);
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag-over'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('drag-over'));
+  drop.addEventListener('drop', e => {
+    e.preventDefault(); drop.classList.remove('drag-over');
+    if (e.dataTransfer.files[0]) set(e.dataTransfer.files[0]);
+  });
 }
 
-function genMeasureTable(table) {
-  const tname    = table.name;
-  const tvar     = sanitiseId(tname);
-  const measures = table.measures ?? [];
-  const cols     = table.columns ?? [];
-  const parts    = table.partitions ?? [];
-  const lines    = [];
+function setStatus(id, msg, type) {
+  const el = document.getElementById(id);
+  el.textContent = msg; el.className = 'status-box ' + type; el.style.display = 'block';
+}
+function hideStatus(id)  { document.getElementById(id).style.display = 'none'; }
+function setPreview(wrapId, preId, text) {
+  document.getElementById(preId).textContent = text.split('\n').slice(0,40).join('\n') + '\n…';
+  document.getElementById(wrapId).style.display = 'block';
+}
+function hidePreview(wrapId) { document.getElementById(wrapId).style.display = 'none'; }
+function setDownload(btnId, content, filename) {
+  const btn = document.getElementById(btnId);
+  btn.style.display = 'block';
+  btn.textContent = '⬇ Download  ' + filename;
+  btn._dl = { content, filename };
+}
+function hideDownload(btnId) { document.getElementById(btnId).style.display = 'none'; }
 
-  lines.push(removeIfExists(tname));
-  lines.push('');
-  lines.push(`Table ${tvar} = new Table`);
-  lines.push(`{`);
-  lines.push(`    Name = ${csv(tname)}`);
-  lines.push(`};`);
-  lines.push('');
+document.querySelectorAll('.download-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (!btn._dl) return;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([btn._dl.content], {type:'text/plain'}));
+    a.download = btn._dl.filename; a.click();
+  });
+});
 
-  for (const m of measures) {
-    const mvar  = sanitiseId(m.name);
-    const mexpr = normaliseExpr(m.expression ?? '');
-    lines.push(`// Measure: ${m.name}`);
-    lines.push(`Measure ${mvar} = new Measure`);
-    lines.push(`{`);
-    lines.push(`    Name       = ${csv(m.name)},`);
-    lines.push(`    Expression = ${csv(mexpr)}`);
-    if (m.formatString) lines.push(`    , FormatString = ${csv(m.formatString)}`);
-    if (m.description)  lines.push(`    , Description  = ${csv(m.description)}`);
-    lines.push(`};`);
-    lines.push(`${tvar}.Measures.Add(${mvar});`);
-    lines.push('');
+// ── Section 1: TMSL → C# ─────────────────────────────────────────────────────
+function esc(s)      { return s.replace(/"/g,'""'); }
+function csv(s)      { return `@"${esc(s)}"`; }
+function sid(name)   { let s=name.replace(/[^A-Za-z0-9_]/g,'_'); return /^\d/.test(s)?'_'+s:s; }
+function nExpr(expr) { return Array.isArray(expr)?expr.join('\n'):String(expr??''); }
+function dtMap(dt)   { return ({string:'String',int64:'Int64',double:'Double',decimal:'Decimal',boolean:'Boolean',datetime:'DateTime',binary:'Binary'})[dt?.toLowerCase()]??'String'; }
+function modeMap(m)  { return ({import:'Import',directquery:'DirectQuery',directlake:'DirectLake',dual:'Dual',push:'Push'})[m?.toLowerCase()]??'Import'; }
+function srcMap(t)   { return ({calculationgroup:'CalculationGroupSource',m:'MPartitionSource',native:'QueryPartitionSource',query:'QueryPartitionSource'})[t?.toLowerCase()]??'MPartitionSource'; }
+
+function removeGuard(name) {
+  return `// Remove if already exists\nif (model.Tables.Contains(${csv(name)}))\n{\n    Console.WriteLine("Removing: ${name}");\n    model.Tables.Remove(${csv(name)});\n}`;
+}
+
+function genCalcGroup(t) {
+  const tv=sid(t.name), L=[];
+  L.push(removeGuard(t.name),'');
+  L.push(`Table ${tv} = new Table\n{\n    Name = ${csv(t.name)},\n    CalculationGroup = new CalculationGroup()\n};`,'');
+  for(const i of (t.calculationGroup?.calculationItems??[])){
+    const iv=sid(i.name);
+    L.push(`// Calculation Item: ${i.name}`);
+    L.push(`CalculationItem ${iv} = new CalculationItem\n{\n    Name       = ${csv(i.name)},\n    Expression = ${csv(nExpr(i.expression))}\n};`);
+    L.push(`${tv}.CalculationGroup.CalculationItems.Add(${iv});`,'');
   }
-
-  for (const col of cols) {
-    const cvar = sanitiseId(col.name);
-    lines.push(`DataColumn ${cvar} = new DataColumn`);
-    lines.push(`{`);
-    lines.push(`    Name         = ${csv(col.name)},`);
-    lines.push(`    DataType     = DataType.${mapDataType(col.dataType)},`);
-    lines.push(`    SourceColumn = ${csv(col.sourceColumn ?? '')}`);
-    lines.push(`};`);
-    lines.push(`${tvar}.Columns.Add(${cvar});`);
-    lines.push('');
+  for(const c of (t.columns??[])){
+    const cv=sid(c.name);
+    L.push(`DataColumn ${cv} = new DataColumn\n{\n    Name         = ${csv(c.name)},\n    DataType     = DataType.${dtMap(c.dataType)},\n    SourceColumn = ${csv(c.sourceColumn??'Name')}\n};`);
+    L.push(`${tv}.Columns.Add(${cv});`,'');
   }
+  for(const p of (t.partitions??[])){
+    const pv=sid(p.name), s=srcMap(p.source?.type??'calculationGroup');
+    L.push(`Partition ${pv} = new Partition\n{\n    Name   = ${csv(p.name)},\n    Mode   = ModeType.${modeMap(p.mode)},\n    Source = new ${s}()\n};`);
+    L.push(`${tv}.Partitions.Add(${pv});`,'');
+  }
+  L.push(`model.Tables.Add(${tv});`);
+  return L.join('\n');
+}
 
-  for (const part of parts) {
-    const pvar  = sanitiseId(part.name);
-    const ptype = part.source?.type ?? 'm';
-    const mode  = mapMode(part.mode);
-    if (ptype === 'm') {
-      const mq = normaliseExpr(part.source?.expression ?? '');
-      lines.push(`Partition ${pvar} = new Partition`);
-      lines.push(`{`);
-      lines.push(`    Name   = ${csv(part.name)},`);
-      lines.push(`    Mode   = ModeType.${mode},`);
-      lines.push(`    Source = new MPartitionSource`);
-      lines.push(`    {`);
-      lines.push(`        Expression = ${csv(mq)}`);
-      lines.push(`    }`);
-      lines.push(`};`);
+function genMeasureTable(t) {
+  const tv=sid(t.name), L=[];
+  L.push(removeGuard(t.name),'');
+  L.push(`Table ${tv} = new Table\n{\n    Name = ${csv(t.name)}\n};`,'');
+  for(const m of (t.measures??[])){
+    const mv=sid(m.name);
+    let b=`Measure ${mv} = new Measure\n{\n    Name       = ${csv(m.name)},\n    Expression = ${csv(nExpr(m.expression))}`;
+    if(m.formatString) b+=`\n    , FormatString = ${csv(m.formatString)}`;
+    if(m.description)  b+=`\n    , Description  = ${csv(m.description)}`;
+    b+=`\n};`;
+    L.push(`// Measure: ${m.name}`,b,`${tv}.Measures.Add(${mv});`,'');
+  }
+  for(const c of (t.columns??[])){
+    const cv=sid(c.name);
+    L.push(`DataColumn ${cv} = new DataColumn\n{\n    Name         = ${csv(c.name)},\n    DataType     = DataType.${dtMap(c.dataType)},\n    SourceColumn = ${csv(c.sourceColumn??'')}\n};`);
+    L.push(`${tv}.Columns.Add(${cv});`,'');
+  }
+  for(const p of (t.partitions??[])){
+    const pv=sid(p.name), pt=p.source?.type??'m';
+    if(pt==='m'){
+      L.push(`Partition ${pv} = new Partition\n{\n    Name   = ${csv(p.name)},\n    Mode   = ModeType.${modeMap(p.mode)},\n    Source = new MPartitionSource\n    {\n        Expression = ${csv(nExpr(p.source?.expression??''))}\n    }\n};`);
     } else {
-      const src = mapPartitionSource(ptype);
-      lines.push(`Partition ${pvar} = new Partition`);
-      lines.push(`{`);
-      lines.push(`    Name   = ${csv(part.name)},`);
-      lines.push(`    Mode   = ModeType.${mode},`);
-      lines.push(`    Source = new ${src}()`);
-      lines.push(`};`);
+      L.push(`Partition ${pv} = new Partition\n{\n    Name   = ${csv(p.name)},\n    Mode   = ModeType.${modeMap(p.mode)},\n    Source = new ${srcMap(pt)}()\n};`);
     }
-    lines.push(`${tvar}.Partitions.Add(${pvar});`);
-    lines.push('');
+    L.push(`${tv}.Partitions.Add(${pv});`,'');
   }
-
-  lines.push(`model.Tables.Add(${tvar});`);
-  return lines.join('\n');
+  L.push(`model.Tables.Add(${tv});`);
+  return L.join('\n');
 }
 
-function genSingleMeasure(tableName, measure) {
-  const mvar  = sanitiseId(measure.name);
-  const mexpr = normaliseExpr(measure.expression ?? '');
-  const lines = [];
-  lines.push(`// Single measure: ${measure.name}  (table: ${tableName})`);
-  lines.push(`Table targetTable = model.Tables[${csv(tableName)}];`);
-  lines.push(`if (targetTable == null)`);
-  lines.push(`    throw new Exception("Table '${tableName}' not found.");`);
-  lines.push('');
-  lines.push(`if (targetTable.Measures.Contains(${csv(measure.name)}))`);
-  lines.push(`    targetTable.Measures.Remove(${csv(measure.name)});`);
-  lines.push('');
-  lines.push(`Measure ${mvar} = new Measure`);
-  lines.push(`{`);
-  lines.push(`    Name       = ${csv(measure.name)},`);
-  lines.push(`    Expression = ${csv(mexpr)}`);
-  if (measure.formatString) lines.push(`    , FormatString = ${csv(measure.formatString)}`);
-  if (measure.description)  lines.push(`    , Description  = ${csv(measure.description)}`);
-  lines.push(`};`);
-  lines.push(`targetTable.Measures.Add(${mvar});`);
-  return lines.join('\n');
+function genSingleMeasure(tname, m) {
+  const mv=sid(m.name), L=[];
+  L.push(`// Measure: ${m.name}  on table: ${tname}`);
+  L.push(`Table tgt = model.Tables[${csv(tname)}];\nif (tgt == null) throw new Exception("Table '${tname}' not found.");`,'');
+  L.push(`if (tgt.Measures.Contains(${csv(m.name)}))\n    tgt.Measures.Remove(${csv(m.name)});`,'');
+  let b=`Measure ${mv} = new Measure\n{\n    Name       = ${csv(m.name)},\n    Expression = ${csv(nExpr(m.expression))}`;
+  if(m.formatString) b+=`\n    , FormatString = ${csv(m.formatString)}`;
+  if(m.description)  b+=`\n    , Description  = ${csv(m.description)}`;
+  b+=`\n};`;
+  L.push(b,`tgt.Measures.Add(${mv});`);
+  return L.join('\n');
 }
 
 function parseTmsl(tmsl) {
-  const blocks = [];
-  const notes  = [];
-
-  for (const cmdKey of ['createOrReplace', 'create', 'alter']) {
-    if (!(cmdKey in tmsl)) continue;
-    const cmd = tmsl[cmdKey];
-    const obj = cmd.object ?? {};
-
-    if (cmd.table) {
-      const t = cmd.table;
-      if (t.calculationGroup) {
-        notes.push(`Calculation Group table: ${t.name}`);
-        blocks.push(genCalculationGroup(t));
-      } else {
-        notes.push(`Measure table: ${t.name}`);
-        blocks.push(genMeasureTable(t));
-      }
-    } else if (cmd.measure) {
-      const tname = obj.table ?? '';
-      notes.push(`Single measure: ${cmd.measure.name} on table ${tname}`);
-      blocks.push(genSingleMeasure(tname, cmd.measure));
+  const blocks=[],notes=[];
+  for(const k of ['createOrReplace','create','alter']){
+    if(!(k in tmsl)) continue;
+    const cmd=tmsl[k], obj=cmd.object??{};
+    if(cmd.table){
+      const t=cmd.table;
+      if(t.calculationGroup){ notes.push(`Calculation Group: ${t.name}`); blocks.push(genCalcGroup(t)); }
+      else { notes.push(`Table: ${t.name}`); blocks.push(genMeasureTable(t)); }
+    } else if(cmd.measure){
+      const tn=obj.table??'';
+      notes.push(`Measure: ${cmd.measure.name} on ${tn}`);
+      blocks.push(genSingleMeasure(tn,cmd.measure));
     }
   }
-
-  if (tmsl.model) {
-    for (const t of tmsl.model.tables ?? []) {
-      if (t.calculationGroup) {
-        notes.push(`Calculation Group table: ${t.name}`);
-        blocks.push(genCalculationGroup(t));
-      } else {
-        notes.push(`Table: ${t.name}`);
-        blocks.push(genMeasureTable(t));
-      }
+  if(tmsl.model){
+    for(const t of (tmsl.model.tables??[])){
+      if(t.calculationGroup){ notes.push(`Calculation Group: ${t.name}`); blocks.push(genCalcGroup(t)); }
+      else { notes.push(`Table: ${t.name}`); blocks.push(genMeasureTable(t)); }
     }
   }
-
-  if (blocks.length === 0)
-    throw new Error('No recognised TMSL command found (createOrReplace / create / alter / model).');
-
-  const description = '// Objects converted from TMSL:\n' +
-    notes.map(n => `//   • ${n}`).join('\n');
-  return { description, blocks };
+  if(!blocks.length) throw new Error('No recognised TMSL command found.');
+  return { notes, blocks };
 }
 
-function indent(text, spaces) {
-  const pad = ' '.repeat(spaces);
-  return text.split('\n').map(l => pad + l).join('\n');
-}
-
-function buildCsFile({ csFilename, tmslFilename, workspace, modelName, description, blocks }) {
-  const body = indent(blocks.join('\n\n'), 12);
-  const ws   = workspace  || 'YOUR_WORKSPACE_NAME';
-  const dm   = modelName  || 'YOUR_SEMANTIC_MODEL_NAME';
-
+function buildTmslCs(opts) {
+  const ws=opts.workspace||'YOUR_WORKSPACE_NAME', dm=opts.modelName||'YOUR_SEMANTIC_MODEL_NAME';
+  const desc='// Objects:\n'+opts.notes.map(n=>`//   • ${n}`).join('\n');
+  const body=opts.blocks.join('\n\n').split('\n').map(l=>'            '+l).join('\n');
   return `// =============================================================================
-// ${csFilename}
+// ${opts.csFilename}
+// AUTO-GENERATED — TMSL to C# Converter
+// Source: ${opts.srcFile}
 //
-// AUTO-GENERATED by TMSL → C# Converter
-// Source TMSL : ${tmslFilename}
+${desc}
 //
-${description}
-//
-// NuGet : Microsoft.AnalysisServices.NetCore.retail.amd64  (>= 19.x)
-//
-// Before running:
-//   1. Verify ServerConnectionString and DatabaseName below
-//   2. Ensure XMLA Read/Write is enabled on the workspace
+// NuGet: Microsoft.AnalysisServices.NetCore.retail.amd64 >= 19.x
 // =============================================================================
 
 using System;
@@ -612,16 +425,13 @@ class Program
     static void Main(string[] args)
     {
         Console.WriteLine("Connecting to Fabric / Power BI XMLA endpoint...");
-
         using (Server server = new Server())
         {
             server.Connect(ServerConnectionString);
             Console.WriteLine($"Connected: {server.Name}");
-
             Database database = server.Databases[DatabaseName];
             if (database == null)
                 throw new Exception($"Database '{DatabaseName}' not found.");
-
             Model model = database.Model;
 
             // -----------------------------------------------------------------
@@ -630,9 +440,6 @@ class Program
 ${body}
 
             // -----------------------------------------------------------------
-            // Persist to the service
-            // -----------------------------------------------------------------
-            Console.WriteLine("Saving changes...");
             model.SaveChanges();
             Console.WriteLine("Done – all objects created successfully.");
         }
@@ -641,127 +448,245 @@ ${body}
 `;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// UI logic
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Section 2: Relationships.txt → C# ────────────────────────────────────────
+function escCs(s) { return String(s??'').replace(/\\/g,'\\\\').replace(/"/g,'\\"'); }
 
-let currentFile = null;
-let generatedCs = null;
-
-const dropZone     = document.getElementById('drop-zone');
-const fileInput    = document.getElementById('file-input');
-const fileInfo     = document.getElementById('file-info');
-const fnameText    = document.getElementById('fname-text');
-const fsizeText    = document.getElementById('fsize-text');
-const fileClear    = document.getElementById('file-clear');
-const convertBtn   = document.getElementById('convert-btn');
-const statusEl     = document.getElementById('status');
-const previewWrap  = document.getElementById('preview-wrap');
-const previewEl    = document.getElementById('preview');
-const downloadBtn  = document.getElementById('download-btn');
-const cfgWorkspace = document.getElementById('cfg-workspace');
-const cfgModel     = document.getElementById('cfg-model');
-
-function formatBytes(b) {
-  if (b < 1024) return b + ' B';
-  return (b / 1024).toFixed(1) + ' KB';
+function parseRelTxt(text) {
+  const lines=text.split(/\r?\n/).filter(l=>l.trim());
+  if(!lines.length) throw new Error('File is empty.');
+  const hdr=lines[0].split('|').map(h=>h.trim());
+  const need=['FromTable','FromColumn','ToTable','ToColumn','CrossFilter','IsActive','SecurityFilter'];
+  const missing=need.filter(c=>!hdr.includes(c));
+  if(missing.length) throw new Error(`Missing columns: ${missing.join(', ')}`);
+  const gi=c=>hdr.indexOf(c);
+  return lines.slice(1).map((line,i)=>{
+    const c=line.split('|');
+    return {
+      fromTable:      c[gi('FromTable')]?.trim()??'',
+      fromColumn:     c[gi('FromColumn')]?.trim()??'',
+      toTable:        c[gi('ToTable')]?.trim()??'',
+      toColumn:       c[gi('ToColumn')]?.trim()??'',
+      crossFilter:    c[gi('CrossFilter')]?.trim()??'OneDirection',
+      isActive:       (c[gi('IsActive')]?.trim()??'True').toLowerCase()==='true'?'true':'false',
+      secFilter:      c[gi('SecurityFilter')]?.trim()??'OneDirection',
+    };
+  }).filter(r=>r.fromTable&&r.toTable);
 }
 
-function setFile(file) {
-  currentFile = file;
-  fnameText.textContent = file.name;
-  fsizeText.textContent = formatBytes(file.size);
-  fileInfo.style.display = 'flex';
-  convertBtn.disabled = false;
-  clearOutput();
+function buildRelCs(rows, srcFile) {
+  const L=[];
+  L.push(`// =============================================================================`);
+  L.push(`// CreateRelationships.cs`);
+  L.push(`// AUTO-GENERATED from: ${srcFile}`);
+  L.push(`// Generated : ${new Date().toISOString()}`);
+  L.push(`// Total relationships: ${rows.length}`);
+  L.push(`//`);
+  L.push(`// Paste and run in Tabular Editor → Advanced Scripting`);
+  L.push(`// =============================================================================`);
+  L.push(``,`int successCount = 0;`,`int failureCount = 0;`);
+  L.push(`var failures = new System.Collections.Generic.List<string>();`,``);
+  for(const [i,r] of rows.entries()){
+    const lbl=`${r.fromTable}[${r.fromColumn}] -> ${r.toTable}[${r.toColumn}]`;
+    L.push(`// Relationship #${i+1}: ${lbl}`);
+    L.push(`try\n{`);
+    L.push(`    var fromTable  = Model.Tables["${escCs(r.fromTable)}"];`);
+    L.push(`    var toTable    = Model.Tables["${escCs(r.toTable)}"];`);
+    L.push(`    var fromColumn = fromTable.Columns["${escCs(r.fromColumn)}"];`);
+    L.push(`    var toColumn   = toTable.Columns["${escCs(r.toColumn)}"];`);
+    L.push(``);
+    L.push(`    var rel = Model.AddRelationship();`);
+    L.push(`    rel.FromColumn = fromColumn;`);
+    L.push(`    rel.ToColumn   = toColumn;`);
+    L.push(`    rel.FromCardinality = RelationshipEndCardinality.Many;`);
+    L.push(`    rel.ToCardinality   = RelationshipEndCardinality.One;`);
+    L.push(`    rel.CrossFilteringBehavior    = CrossFilteringBehavior.${escCs(r.crossFilter)};`);
+    L.push(`    rel.SecurityFilteringBehavior = SecurityFilteringBehavior.${escCs(r.secFilter)};`);
+    L.push(`    rel.IsActive = ${r.isActive};`);
+    L.push(`    successCount++;`);
+    L.push(`}\ncatch (Exception ex)\n{`);
+    L.push(`    failureCount++;`);
+    L.push(`    failures.Add("${escCs(lbl)}: " + ex.Message);`);
+    L.push(`}`,``);
+  }
+  L.push(`// ── Summary ──────────────────────────────────────────────────────────────`);
+  L.push(`Output("Successfully created: " + successCount + " relationships");`);
+  L.push(`Output("Failed: " + failureCount + " relationships");`);
+  L.push(`if (failures.Count > 0)\n{\n    Output("Failure details:");\n    foreach (var f in failures) Output("  - " + f);\n}`);
+  return L.join('\n');
 }
 
-function clearOutput() {
-  statusEl.style.display = 'none';
-  previewWrap.style.display = 'none';
-  downloadBtn.style.display = 'none';
-  generatedCs = null;
-}
+// ── Wire Section 1 ────────────────────────────────────────────────────────────
+let tmslFile=null;
+wireDropZone(
+  {drop:'tmsl-drop',input:'tmsl-input',info:'tmsl-info',fname:'tmsl-fname',fsize:'tmsl-fsize',clear:'tmsl-clear',btn:'tmsl-btn'},
+  f=>{ tmslFile=f; hideStatus('tmsl-status'); hidePreview('tmsl-preview-wrap'); hideDownload('tmsl-dl'); },
+  ()=>{ tmslFile=null; hideStatus('tmsl-status'); hidePreview('tmsl-preview-wrap'); hideDownload('tmsl-dl'); }
+);
 
-function clearFile() {
-  currentFile = null;
-  fileInput.value = '';
-  fileInfo.style.display = 'none';
-  convertBtn.disabled = true;
-  clearOutput();
-}
+document.getElementById('tmsl-btn').addEventListener('click', ()=>{
+  if(!tmslFile) return;
+  const btn=document.getElementById('tmsl-btn');
+  btn.disabled=true; btn.textContent='Converting…';
+  hideStatus('tmsl-status'); hidePreview('tmsl-preview-wrap'); hideDownload('tmsl-dl');
 
-function showStatus(msg, type) {
-  statusEl.textContent = msg;
-  statusEl.className = type;
-  statusEl.style.display = 'block';
-}
-
-fileInput.addEventListener('change', e => {
-  if (e.target.files[0]) setFile(e.target.files[0]);
-});
-fileClear.addEventListener('click', clearFile);
-
-dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-dropZone.addEventListener('drop', e => {
-  e.preventDefault();
-  dropZone.classList.remove('drag-over');
-  const f = e.dataTransfer.files[0];
-  if (f) setFile(f);
-});
-
-convertBtn.addEventListener('click', () => {
-  if (!currentFile) return;
-
-  convertBtn.disabled = true;
-  convertBtn.textContent = 'Converting…';
-  clearOutput();
-
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const tmsl = JSON.parse(e.target.result);
-      const { description, blocks } = parseTmsl(tmsl);
-
-      const csFilename = currentFile.name.replace(/\.(tmsl|json)$/i, '.cs');
-      generatedCs = buildCsFile({
-        csFilename,
-        tmslFilename : currentFile.name,
-        workspace    : cfgWorkspace.value.trim(),
-        modelName    : cfgModel.value.trim(),
-        description,
-        blocks,
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const tmsl=JSON.parse(e.target.result);
+      const {notes,blocks}=parseTmsl(tmsl);
+      const fn=tmslFile.name.replace(/\.(tmsl|json)$/i,'.cs');
+      const content=buildTmslCs({
+        csFilename:fn, srcFile:tmslFile.name,
+        workspace:'YOUR_WORKSPACE_NAME',
+        modelName:'YOUR_SEMANTIC_MODEL_NAME',
+        notes, blocks,
       });
-
-      // Preview first 40 lines
-      const lines = generatedCs.split('\n').slice(0, 40).join('\n');
-      previewEl.textContent = lines + '\n…';
-      previewWrap.style.display = 'block';
-
-      showStatus(`✓ Converted successfully · ${blocks.length} object(s) generated`, 'success');
-      downloadBtn.textContent = `⬇ Download  ${csFilename}`;
-      downloadBtn.style.display = 'block';
-      downloadBtn._filename = csFilename;
-    } catch (err) {
-      showStatus(`✗ Error: ${err.message}`, 'error');
-    } finally {
-      convertBtn.disabled = false;
-      convertBtn.textContent = 'Convert to C#';
+      setPreview('tmsl-preview-wrap','tmsl-preview',content);
+      setStatus('tmsl-status',`✓ Converted · ${blocks.length} object(s) generated`,'success');
+      setDownload('tmsl-dl',content,fn);
+    }catch(err){
+      setStatus('tmsl-status','✗ '+err.message,'error');
+    }finally{
+      btn.disabled=false; btn.textContent='Convert to C#';
     }
   };
-  reader.readAsText(currentFile);
+  r.readAsText(tmslFile);
 });
 
-downloadBtn.addEventListener('click', () => {
-  if (!generatedCs) return;
-  const blob = new Blob([generatedCs], { type: 'text/plain' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
-  a.download = downloadBtn._filename;
-  a.click();
-  URL.revokeObjectURL(url);
+// ── Wire Section 2 ────────────────────────────────────────────────────────────
+let relFile=null;
+wireDropZone(
+  {drop:'rel-drop',input:'rel-input',info:'rel-info',fname:'rel-fname',fsize:'rel-fsize',clear:'rel-clear',btn:'rel-btn'},
+  f=>{ relFile=f; hideStatus('rel-status'); hidePreview('rel-preview-wrap'); hideDownload('rel-dl'); },
+  ()=>{ relFile=null; hideStatus('rel-status'); hidePreview('rel-preview-wrap'); hideDownload('rel-dl'); }
+);
+
+document.getElementById('rel-btn').addEventListener('click', ()=>{
+  if(!relFile) return;
+  const btn=document.getElementById('rel-btn');
+  btn.disabled=true; btn.textContent='Generating…';
+  hideStatus('rel-status'); hidePreview('rel-preview-wrap'); hideDownload('rel-dl');
+
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const rows=parseRelTxt(e.target.result);
+      const content=buildRelCs(rows,relFile.name);
+      setPreview('rel-preview-wrap','rel-preview',content);
+      setStatus('rel-status',`✓ Generated · ${rows.length} relationship(s)`,'success');
+      setDownload('rel-dl',content,'CreateRelationships.cs');
+    }catch(err){
+      setStatus('rel-status','✗ '+err.message,'error');
+    }finally{
+      btn.disabled=false; btn.textContent='Generate Relationships C#';
+    }
+  };
+  r.readAsText(relFile);
+});
+// ── Section 3: Measures TMSL → .csx ──────────────────────────────────────────
+function parseTmslMeasures(tmsl) {
+  // Collect all { tableName, measure } pairs from any TMSL shape
+  const results = [];
+
+  function harvestTable(t) {
+    for (const m of (t.measures ?? [])) {
+      results.push({ tableName: t.name, measure: m });
+    }
+  }
+
+  for (const k of ['createOrReplace','create','alter']) {
+    if (!(k in tmsl)) continue;
+    const cmd = tmsl[k], obj = cmd.object ?? {};
+    if (cmd.table)   harvestTable(cmd.table);
+    if (cmd.measure) results.push({ tableName: obj.table ?? '', measure: cmd.measure });
+  }
+  if (tmsl.model) {
+    for (const t of (tmsl.model.tables ?? [])) harvestTable(t);
+  }
+  if (!results.length) throw new Error('No measures found in this TMSL file.');
+  return results;
+}
+
+function buildMeasuresCsx(items, srcFile) {
+  const L = [];
+  L.push(`// =============================================================================`);
+  L.push(`// CreateMeasures.csx`);
+  L.push(`// AUTO-GENERATED from: ${srcFile}`);
+  L.push(`// Generated : ${new Date().toISOString()}`);
+  L.push(`// Total measures: ${items.length}`);
+  L.push(`//`);
+  L.push(`// Paste and run in Tabular Editor → Advanced Scripting`);
+  L.push(`// against the TARGET Fabric Semantic Model.`);
+  L.push(`// =============================================================================`);
+  L.push(``, `int successCount = 0;`, `int failureCount = 0;`);
+  L.push(`var failures = new System.Collections.Generic.List<string>();`, ``);
+
+  for (const [i, { tableName, measure }] of items.entries()) {
+    const mname  = measure.name;
+    const mexpr  = nExpr(measure.expression);
+    const mfmt   = measure.formatString ?? '';
+    const mdesc  = measure.description  ?? '';
+    const label  = `${tableName}[${mname}]`;
+
+    L.push(`// Measure #${i + 1}: ${label}`);
+    L.push(`try\n{`);
+    L.push(`    var tbl = Model.Tables["${escCs(tableName)}"];`);
+    L.push(`    if (tbl == null) throw new Exception("Table '${escCs(tableName)}' not found.");`);
+    L.push(``);
+    L.push(`    // Remove existing measure if present`);
+    L.push(`    var existing = tbl.Measures["${escCs(mname)}"];`);
+    L.push(`    if (existing != null) existing.Delete();`);
+    L.push(``);
+    L.push(`    var m = tbl.AddMeasure(`);
+    L.push(`        "${escCs(mname)}",`);
+    L.push(`        "${escCs(mexpr)}"${mfmt ? ',' : ''}`);
+    if (mfmt) L.push(`        "${escCs(mfmt)}"`);
+    L.push(`    );`);
+    if (mdesc) L.push(`    m.Description = "${escCs(mdesc)}";`);
+    L.push(`    successCount++;`);
+    L.push(`}\ncatch (Exception ex)\n{`);
+    L.push(`    failureCount++;`);
+    L.push(`    failures.Add("${escCs(label)}: " + ex.Message);`);
+    L.push(`}`, ``);
+  }
+
+  L.push(`// ── Summary ──────────────────────────────────────────────────────────────`);
+  L.push(`Output("Successfully created: " + successCount + " measures");`);
+  L.push(`Output("Failed: " + failureCount + " measures");`);
+  L.push(`if (failures.Count > 0)\n{\n    Output("Failure details:");\n    foreach (var f in failures) Output("  - " + f);\n}`);
+  return L.join('\n');
+}
+
+// ── Wire Section 3 ────────────────────────────────────────────────────────────
+let msrFile = null;
+wireDropZone(
+  {drop:'msr-drop',input:'msr-input',info:'msr-info',fname:'msr-fname',fsize:'msr-fsize',clear:'msr-clear',btn:'msr-btn'},
+  f  => { msrFile=f; hideStatus('msr-status'); hidePreview('msr-preview-wrap'); hideDownload('msr-dl'); },
+  () => { msrFile=null; hideStatus('msr-status'); hidePreview('msr-preview-wrap'); hideDownload('msr-dl'); }
+);
+
+document.getElementById('msr-btn').addEventListener('click', () => {
+  if (!msrFile) return;
+  const btn = document.getElementById('msr-btn');
+  btn.disabled = true; btn.textContent = 'Generating…';
+  hideStatus('msr-status'); hidePreview('msr-preview-wrap'); hideDownload('msr-dl');
+
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      const tmsl  = JSON.parse(e.target.result);
+      const items = parseTmslMeasures(tmsl);
+      const content = buildMeasuresCsx(items, msrFile.name);
+      setPreview('msr-preview-wrap', 'msr-preview', content);
+      setStatus('msr-status', `✓ Generated · ${items.length} measure(s)`, 'success');
+      setDownload('msr-dl', content, 'CreateMeasures.csx');
+    } catch(err) {
+      setStatus('msr-status', '✗ ' + err.message, 'error');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Generate Measures .csx';
+    }
+  };
+  r.readAsText(msrFile);
 });
 </script>
 </body>

@@ -127,8 +127,19 @@
   .preview-box::-webkit-scrollbar { width: 5px; }
   .preview-box::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
+  /* Section description */
+  .section-desc { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); line-height: 1.65; margin-bottom: 18px; padding: 10px 14px; background: rgba(255,255,255,0.03); border-left: 3px solid var(--border); border-radius: 0 6px 6px 0; }
+
+  /* Button row (preview + download side by side) */
+  .btn-row { display: none; margin-top: 14px; gap: 10px; }
+  .btn-row.visible { display: flex; }
+
+  /* Preview toggle button */
+  .preview-btn { flex: 1; padding: 11px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-family: var(--sans); font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: border-color 0.2s, color 0.2s; }
+  .preview-btn:hover { border-color: var(--text); color: var(--text); }
+
   /* Download */
-  .download-btn { display: none; margin-top: 14px; width: 100%; padding: 12px; background: transparent; border: 1px solid var(--green); border-radius: 8px; color: var(--green); font-family: var(--sans); font-size: 0.88rem; font-weight: 700; cursor: pointer; transition: background 0.2s; }
+  .download-btn { flex: 2; padding: 11px; background: transparent; border: 1px solid var(--green); border-radius: 8px; color: var(--green); font-family: var(--sans); font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: background 0.2s; }
   .download-btn:hover { background: rgba(34,197,94,0.08); }
 
   .divider { width: 100%; max-width: 680px; border: none; border-top: 1px solid var(--border); margin: 8px 0 40px; }
@@ -141,6 +152,7 @@
 <header>
   <h1>Fabric Model <span class="grad">Toolkit</span></h1>
   <p>Azure Analysis Services &nbsp;·&nbsp; Fabric Semantic Model &nbsp;·&nbsp; Tabular Editor</p>
+  <p style="margin-top:14px; max-width:560px; margin-left:auto; margin-right:auto; color:#94a3b8; font-family:'Syne',sans-serif; font-size:0.88rem; line-height:1.7;">A browser-based toolkit to migrate Azure Analysis Services models to Microsoft Fabric. Upload your TMSL or relationship files and instantly download ready-to-run C# scripts. No server, no install required.</p>
 </header>
 
 <!-- ── Section 1: TMSL → C# ─────────────────────────────────────────────── -->
@@ -150,6 +162,7 @@
     <h2>Calculation Group &rarr; C#</h2>
   </div>
   <div class="card">
+    <p class="section-desc">Upload a TMSL file exported from Azure Analysis Services to generate a C# script that recreates calculation groups in your Fabric Semantic Model.</p>
     <div class="drop-zone blue" id="tmsl-drop">
       <input type="file" id="tmsl-input" accept=".tmsl,.json" />
       <div class="dz-icon">📄</div>
@@ -162,8 +175,11 @@
     </div>
     <button class="action-btn blue" id="tmsl-btn" disabled>Convert to C#</button>
     <div class="status-box" id="tmsl-status"></div>
+    <div class="btn-row" id="tmsl-btn-row">
+      <button class="preview-btn" id="tmsl-preview-btn">👁 Preview</button>
+      <button class="download-btn" id="tmsl-dl">⬇ Download .cs File</button>
+    </div>
     <div class="preview-wrap" id="tmsl-preview-wrap"><div class="plabel">Preview — first 40 lines</div><pre class="preview-box" id="tmsl-preview"></pre></div>
-    <button class="download-btn" id="tmsl-dl">⬇ Download .cs File</button>
   </div>
 </div>
 
@@ -176,6 +192,7 @@
     <h2>Relationships &rarr; C# &nbsp;(Tabular Editor Script)</h2>
   </div>
   <div class="card">
+    <p class="section-desc">Upload a Relationships.txt file to generate a Tabular Editor script that bulk creates all relationships in your target model.</p>
     <div class="drop-zone orange" id="rel-drop">
       <input type="file" id="rel-input" accept=".txt,.csv" />
       <div class="dz-icon">🔗</div>
@@ -188,8 +205,11 @@
     </div>
     <button class="action-btn orange" id="rel-btn" disabled>Generate Relationships C#</button>
     <div class="status-box" id="rel-status"></div>
+    <div class="btn-row" id="rel-btn-row">
+      <button class="preview-btn" id="rel-preview-btn">👁 Preview</button>
+      <button class="download-btn" id="rel-dl">⬇ Download CreateRelationships.cs</button>
+    </div>
     <div class="preview-wrap" id="rel-preview-wrap"><div class="plabel">Preview — first 40 lines</div><pre class="preview-box" id="rel-preview"></pre></div>
-    <button class="download-btn" id="rel-dl">⬇ Download CreateRelationships.cs</button>
   </div>
 </div>
 
@@ -202,6 +222,7 @@
     <h2>Measures &rarr; .csx &nbsp;(Tabular Editor Script)</h2>
   </div>
   <div class="card">
+    <p class="section-desc">Upload a TMSL file to generate a Tabular Editor script that recreates all measures with their DAX expressions and format strings.</p>
     <div class="drop-zone teal" id="msr-drop">
       <input type="file" id="msr-input" accept=".tmsl,.json" />
       <div class="dz-icon">📐</div>
@@ -214,8 +235,11 @@
     </div>
     <button class="action-btn teal" id="msr-btn" disabled>Generate Measures .csx</button>
     <div class="status-box" id="msr-status"></div>
+    <div class="btn-row" id="msr-btn-row">
+      <button class="preview-btn" id="msr-preview-btn">👁 Preview</button>
+      <button class="download-btn" id="msr-dl">⬇ Download CreateMeasures.csx</button>
+    </div>
     <div class="preview-wrap" id="msr-preview-wrap"><div class="plabel">Preview — first 40 lines</div><pre class="preview-box" id="msr-preview"></pre></div>
-    <button class="download-btn" id="msr-dl">⬇ Download CreateMeasures.csx</button>
   </div>
 </div>
 
@@ -276,11 +300,22 @@ function setPreview(wrapId, preId, text) {
 function hidePreview(wrapId) { document.getElementById(wrapId).style.display = 'none'; }
 function setDownload(btnId, content, filename) {
   const btn = document.getElementById(btnId);
-  btn.style.display = 'block';
   btn.textContent = '⬇ Download  ' + filename;
   btn._dl = { content, filename };
 }
-function hideDownload(btnId) { document.getElementById(btnId).style.display = 'none'; }
+function hideDownload(btnId) { const b=document.getElementById(btnId); b._dl=null; }
+function showBtnRow(rowId)  { document.getElementById(rowId).classList.add('visible'); }
+function hideBtnRow(rowId)  { document.getElementById(rowId).classList.remove('visible'); }
+
+function wirePreviewToggle(previewBtnId, wrapId, preId) {
+  document.getElementById(previewBtnId).addEventListener('click', () => {
+    const wrap = document.getElementById(wrapId);
+    const btn  = document.getElementById(previewBtnId);
+    const open = wrap.style.display === 'block';
+    wrap.style.display = open ? 'none' : 'block';
+    btn.textContent = open ? '👁 Preview' : '🙈 Hide Preview';
+  });
+}
 
 document.querySelectorAll('.download-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -519,15 +554,16 @@ function buildRelCs(rows, srcFile) {
 let tmslFile=null;
 wireDropZone(
   {drop:'tmsl-drop',input:'tmsl-input',info:'tmsl-info',fname:'tmsl-fname',fsize:'tmsl-fsize',clear:'tmsl-clear',btn:'tmsl-btn'},
-  f=>{ tmslFile=f; hideStatus('tmsl-status'); hidePreview('tmsl-preview-wrap'); hideDownload('tmsl-dl'); },
-  ()=>{ tmslFile=null; hideStatus('tmsl-status'); hidePreview('tmsl-preview-wrap'); hideDownload('tmsl-dl'); }
+  f=>{ tmslFile=f; hideStatus('tmsl-status'); hidePreview('tmsl-preview-wrap'); hideBtnRow('tmsl-btn-row'); },
+  ()=>{ tmslFile=null; hideStatus('tmsl-status'); hidePreview('tmsl-preview-wrap'); hideBtnRow('tmsl-btn-row'); }
 );
+wirePreviewToggle('tmsl-preview-btn','tmsl-preview-wrap','tmsl-preview');
 
 document.getElementById('tmsl-btn').addEventListener('click', ()=>{
   if(!tmslFile) return;
   const btn=document.getElementById('tmsl-btn');
   btn.disabled=true; btn.textContent='Converting…';
-  hideStatus('tmsl-status'); hidePreview('tmsl-preview-wrap'); hideDownload('tmsl-dl');
+  hideStatus('tmsl-status'); hidePreview('tmsl-preview-wrap'); hideBtnRow('tmsl-btn-row');
 
   const r=new FileReader();
   r.onload=e=>{
@@ -541,9 +577,14 @@ document.getElementById('tmsl-btn').addEventListener('click', ()=>{
         modelName:'YOUR_SEMANTIC_MODEL_NAME',
         notes, blocks,
       });
-      setPreview('tmsl-preview-wrap','tmsl-preview',content);
-      setStatus('tmsl-status',`✓ Converted · ${blocks.length} object(s) generated`,'success');
-      setDownload('tmsl-dl',content,fn);
+      // Count calc groups and total items for summary
+      const cgCount   = blocks.length;
+      const itemCount = notes.filter(n=>n.startsWith('Calculation')).length;
+      const summary   = `✓ ${cgCount} Calculation Group${cgCount!==1?'s':''} · ${notes.length} object${notes.length!==1?'s':''} converted`;
+      document.getElementById('tmsl-preview').textContent = content.split('\n').slice(0,40).join('\n')+'\n…';
+      setStatus('tmsl-status', summary, 'success');
+      setDownload('tmsl-dl', content, fn);
+      showBtnRow('tmsl-btn-row');
     }catch(err){
       setStatus('tmsl-status','✗ '+err.message,'error');
     }finally{
@@ -557,24 +598,30 @@ document.getElementById('tmsl-btn').addEventListener('click', ()=>{
 let relFile=null;
 wireDropZone(
   {drop:'rel-drop',input:'rel-input',info:'rel-info',fname:'rel-fname',fsize:'rel-fsize',clear:'rel-clear',btn:'rel-btn'},
-  f=>{ relFile=f; hideStatus('rel-status'); hidePreview('rel-preview-wrap'); hideDownload('rel-dl'); },
-  ()=>{ relFile=null; hideStatus('rel-status'); hidePreview('rel-preview-wrap'); hideDownload('rel-dl'); }
+  f=>{ relFile=f; hideStatus('rel-status'); hidePreview('rel-preview-wrap'); hideBtnRow('rel-btn-row'); },
+  ()=>{ relFile=null; hideStatus('rel-status'); hidePreview('rel-preview-wrap'); hideBtnRow('rel-btn-row'); }
 );
+wirePreviewToggle('rel-preview-btn','rel-preview-wrap','rel-preview');
 
 document.getElementById('rel-btn').addEventListener('click', ()=>{
   if(!relFile) return;
   const btn=document.getElementById('rel-btn');
   btn.disabled=true; btn.textContent='Generating…';
-  hideStatus('rel-status'); hidePreview('rel-preview-wrap'); hideDownload('rel-dl');
+  hideStatus('rel-status'); hidePreview('rel-preview-wrap'); hideBtnRow('rel-btn-row');
 
   const r=new FileReader();
   r.onload=e=>{
     try{
       const rows=parseRelTxt(e.target.result);
       const content=buildRelCs(rows,relFile.name);
-      setPreview('rel-preview-wrap','rel-preview',content);
-      setStatus('rel-status',`✓ Generated · ${rows.length} relationship(s)`,'success');
-      setDownload('rel-dl',content,'CreateRelationships.cs');
+      const activeCnt   = rows.filter(r=>r.isActive==='true').length;
+      const inactiveCnt = rows.length - activeCnt;
+      let summary = `✓ ${rows.length} Relationship${rows.length!==1?'s':''} generated`;
+      if(inactiveCnt>0) summary += ` (${activeCnt} active · ${inactiveCnt} inactive)`;
+      document.getElementById('rel-preview').textContent = content.split('\n').slice(0,40).join('\n')+'\n…';
+      setStatus('rel-status', summary, 'success');
+      setDownload('rel-dl', content, 'CreateRelationships.cs');
+      showBtnRow('rel-btn-row');
     }catch(err){
       setStatus('rel-status','✗ '+err.message,'error');
     }finally{
@@ -661,15 +708,16 @@ function buildMeasuresCsx(items, srcFile) {
 let msrFile = null;
 wireDropZone(
   {drop:'msr-drop',input:'msr-input',info:'msr-info',fname:'msr-fname',fsize:'msr-fsize',clear:'msr-clear',btn:'msr-btn'},
-  f  => { msrFile=f; hideStatus('msr-status'); hidePreview('msr-preview-wrap'); hideDownload('msr-dl'); },
-  () => { msrFile=null; hideStatus('msr-status'); hidePreview('msr-preview-wrap'); hideDownload('msr-dl'); }
+  f  => { msrFile=f; hideStatus('msr-status'); hidePreview('msr-preview-wrap'); hideBtnRow('msr-btn-row'); },
+  () => { msrFile=null; hideStatus('msr-status'); hidePreview('msr-preview-wrap'); hideBtnRow('msr-btn-row'); }
 );
+wirePreviewToggle('msr-preview-btn','msr-preview-wrap','msr-preview');
 
 document.getElementById('msr-btn').addEventListener('click', () => {
   if (!msrFile) return;
   const btn = document.getElementById('msr-btn');
   btn.disabled = true; btn.textContent = 'Generating…';
-  hideStatus('msr-status'); hidePreview('msr-preview-wrap'); hideDownload('msr-dl');
+  hideStatus('msr-status'); hidePreview('msr-preview-wrap'); hideBtnRow('msr-btn-row');
 
   const r = new FileReader();
   r.onload = e => {
@@ -677,9 +725,13 @@ document.getElementById('msr-btn').addEventListener('click', () => {
       const tmsl  = JSON.parse(e.target.result);
       const items = parseTmslMeasures(tmsl);
       const content = buildMeasuresCsx(items, msrFile.name);
-      setPreview('msr-preview-wrap', 'msr-preview', content);
-      setStatus('msr-status', `✓ Generated · ${items.length} measure(s)`, 'success');
+      // Count unique tables for summary
+      const tableSet = new Set(items.map(i=>i.tableName));
+      const summary  = `✓ ${items.length} Measure${items.length!==1?'s':''} generated across ${tableSet.size} table${tableSet.size!==1?'s':''}`;
+      document.getElementById('msr-preview').textContent = content.split('\n').slice(0,40).join('\n')+'\n…';
+      setStatus('msr-status', summary, 'success');
       setDownload('msr-dl', content, 'CreateMeasures.csx');
+      showBtnRow('msr-btn-row');
     } catch(err) {
       setStatus('msr-status', '✗ ' + err.message, 'error');
     } finally {

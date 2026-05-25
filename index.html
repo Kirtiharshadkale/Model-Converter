@@ -336,7 +336,8 @@ function modeMap(m)  { return ({import:'Import',directquery:'DirectQuery',direct
 function srcMap(t)   { return ({calculationgroup:'CalculationGroupSource',m:'MPartitionSource',native:'QueryPartitionSource',query:'QueryPartitionSource'})[t?.toLowerCase()]??'MPartitionSource'; }
 
 function removeGuard(name) {
-  return `// Remove if already exists\nif (model.Tables.Contains(${csv(name)}))\n{\n    Console.WriteLine("Removing: ${name}");\n    model.Tables.Remove(${csv(name)});\n}`;
+  const q = csv(name);
+  return `// Remove if already exists\nif (model.Tables.Contains(${q}))\n{\n    Console.WriteLine("Removing: " + ${q});\n    model.Tables.Remove(${q});\n}`;
 }
 
 function genCalcGroup(t) {
@@ -463,10 +464,10 @@ class Program
         using (Server server = new Server())
         {
             server.Connect(ServerConnectionString);
-            Console.WriteLine($"Connected: {server.Name}");
+            Console.WriteLine("Connected: " + server.Name);
             Database database = server.Databases[DatabaseName];
             if (database == null)
-                throw new Exception($"Database '{DatabaseName}' not found.");
+                throw new Exception("Database '" + DatabaseName + "' not found.");
             Model model = database.Model;
 
             // -----------------------------------------------------------------
